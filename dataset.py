@@ -3,7 +3,7 @@ import sys, os, argparse, time, datetime
 import numpy as np
 import random
 import networkx as nx
-from concorde.tsp import TSPSolver
+from pyconcorde import TSPSolver
 from redirector import Redirector
 
 def solve(Ma, Mw):

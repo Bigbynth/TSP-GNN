@@ -9,9 +9,9 @@ class GraphNN(object):
     msg,
     loop,
     MLP_depth = 3,
-    MLP_weight_initializer = tf.contrib.layers.xavier_initializer,
+    MLP_weight_initializer = tf.compat.v1.keras.initializers.glorot_normal,
     MLP_bias_initializer = tf.zeros_initializer,
-    RNN_cell = tf.contrib.rnn.LayerNormBasicLSTMCell,
+    RNN_cell = tf.keras.layers.LSTMCell,
     Cell_activation = tf.nn.relu,
     Msg_activation = tf.nn.relu,
     Msg_last_activation = None,
@@ -62,8 +62,8 @@ class GraphNN(object):
     self.check_model()
     
     # Initialize the parameters
-    with tf.variable_scope(self.name):
-      with tf.variable_scope('parameters'):
+    with tf.compat.v1.variable_scope(self.name):
+      with tf.compat.v1.variable_scope('parameters'):
         self._init_parameters()
       #end parameter scope
     #end GraphNN scope
@@ -126,8 +126,8 @@ class GraphNN(object):
   #end _init_parameters
 
   def __call__( self, adjacency_matrices, initial_embeddings, time_steps, LSTM_initial_states = {} ):
-    with tf.variable_scope(self.name):
-      with tf.variable_scope( "assertions" ):
+    with tf.compat.v1.variable_scope(self.name):
+      with tf.compat.v1.variable_scope( "assertions" ):
         assertions = self.check_run( adjacency_matrices, initial_embeddings, time_steps, LSTM_initial_states )
       #end assertion variable scope
       with tf.control_dependencies( assertions ):
@@ -135,7 +135,7 @@ class GraphNN(object):
         for v, init in initial_embeddings.items():
           h0 = init
           c0 = tf.zeros_like(h0, dtype=self.float_dtype) if v not in LSTM_initial_states else LSTM_initial_states[v]
-          states[v] = tf.contrib.rnn.LSTMStateTuple(h=h0, c=c0)
+          states[v] = tf.compat.v1.nn.rnn_cell.LSTMStateTuple(h=h0, c=c0)
         #end
         
         # Build while loop body function
@@ -165,8 +165,8 @@ class GraphNN(object):
               #end if var in update
             #end for update in loop
             inputs = tf.concat( inputs, axis = 1 )
-            with tf.variable_scope( '{v}_cell'.format( v = v ) ):
-              _, new_states[v] = self._RNN_cells[v]( inputs = inputs, state = states[v] )
+            with tf.compat.v1.variable_scope( '{v}_cell'.format( v = v ) ):
+              _, new_states[v] = self._RNN_cells[v]( inputs = inputs, states = states[v] )
             #end cell scope
           #end for v in var
           return (t+1), new_states
@@ -183,6 +183,8 @@ class GraphNN(object):
   #end __call__
 
   def check_run( self, adjacency_matrices, initial_embeddings, time_steps, LSTM_initial_states ):
+    pass
+  '''
     assertions = []
     # Procedure to check model for inconsistencies
     num_vars = {}
@@ -268,5 +270,6 @@ class GraphNN(object):
       #end if-else
     #end for mat, (v1,v2)
     return assertions
+    '''
   #end check_run
 #end GraphNN

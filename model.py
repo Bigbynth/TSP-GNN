@@ -13,20 +13,21 @@ def build_network(d):
     learning_rate = 2e-5
     l2norm_scaling = 1e-10
     global_norm_gradient_clipping_ratio = 0.65
+    tf.compat.v1.disable_eager_execution()
 
     # Placeholder for answers to the decision problems (one per problem)
-    route_exists = tf.placeholder( tf.float32, shape = (None,), name = 'route_exists' )
+    route_exists = tf.compat.v1.placeholder( tf.float32, shape = (None,), name = 'route_exists' )
     # Placeholders for the list of number of vertices and edges per instance
-    n_vertices  = tf.placeholder( tf.int32, shape = (None,), name = 'n_vertices')
-    n_edges     = tf.placeholder( tf.int32, shape = (None,), name = 'edges')
+    n_vertices  = tf.compat.v1.placeholder( tf.int32, shape = (None,), name = 'n_vertices')
+    n_edges     = tf.compat.v1.placeholder( tf.int32, shape = (None,), name = 'edges')
     # Placeholder for the adjacency matrix connecting each edge to its source and target vertices
-    EV_matrix   = tf.placeholder( tf.float32, shape = (None,None), name = "EV" )
+    EV_matrix   = tf.compat.v1.placeholder( tf.float32, shape = (None,None), name = "EV" )
     # Placeholder for the column matrix of edge weights
-    edge_weight = tf.placeholder( tf.float32, shape = (None,1), name = "edge_weight" )
+    edge_weight = tf.compat.v1.placeholder( tf.float32, shape = (None,1), name = "edge_weight" )
     # Placeholder for route target costs (one per problem)
-    target_cost = tf.placeholder( tf.float32, shape = (None,1), name = "target_cost" )
+    target_cost = tf.compat.v1.placeholder( tf.float32, shape = (None,1), name = "target_cost" )
     # Placeholder for the number of timesteps the GNN is to run for
-    time_steps  = tf.placeholder( tf.int32, shape = (), name = "time_steps" )
+    time_steps  = tf.compat.v1.placeholder( tf.int32, shape = (), name = "time_steps" )
     
     # Define a MLP to compute an initial embedding for each edge, given its
     # weight and the target cost of the corresponding instance
@@ -36,7 +37,7 @@ def build_network(d):
         output_size = d,
         name = 'E_init_MLP',
         name_internal_layers = True,
-        kernel_initializer = tf.contrib.layers.xavier_initializer(),
+        kernel_initializer = tf.compat.v1.keras.initializers.glorot_normal(),
         bias_initializer = tf.zeros_initializer()
     )
     # Compute initial embeddings for edges
@@ -44,9 +45,9 @@ def build_network(d):
     
     # All vertex embeddings are initialized with the same value, which is a trained parameter learned by the network
     total_n = tf.shape(EV_matrix)[1]
-    v_init = tf.get_variable(initializer=tf.random_normal((1,d)), dtype=tf.float32, name='V_init')
+    v_init = tf.compat.v1.get_variable(initializer=tf.random.normal((1,d)), dtype=tf.float32, name='V_init')
     vertex_initial_embeddings = tf.tile(
-        tf.div(v_init, tf.sqrt(tf.cast(d, tf.float32))),
+        tf.compat.v1.div(v_init, tf.sqrt(tf.cast(d, tf.float32))),
         [total_n, 1]
     )
 
@@ -110,7 +111,7 @@ def build_network(d):
         output_size = 1,
         name = 'E_vote',
         name_internal_layers = True,
-        kernel_initializer = tf.contrib.layers.xavier_initializer(),
+        kernel_initializer = tf.compat.v1.keras.initializers.glorot_normal(),
         bias_initializer = tf.zeros_initializer()
         )
     
@@ -157,15 +158,16 @@ def build_network(d):
     GNN['loss'] = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=route_exists, logits=pred_logits))
 
     # Define optimizer
-    optimizer = tf.train.AdamOptimizer(name='Adam', learning_rate=learning_rate)
+    optimizer = tf.keras.optimizers.Adam(name='Adam', learning_rate=learning_rate)
 
     # Compute cost relative to L2 normalization
-    vars_cost = tf.add_n([ tf.nn.l2_loss(var) for var in tf.trainable_variables() ])
+    vars_cost = tf.add_n([ tf.nn.l2_loss(var) for var in tf.compat.v1.trainable_variables() ])
 
     # Define gradients and train step
-    grads, _ = tf.clip_by_global_norm(tf.gradients(GNN['loss'] + tf.multiply(vars_cost, l2norm_scaling),tf.trainable_variables()),global_norm_gradient_clipping_ratio)
-    GNN['train_step'] = optimizer.apply_gradients(zip(grads, tf.trainable_variables()))
+    grads, _ = tf.clip_by_global_norm(tf.gradients(GNN['loss'] + tf.multiply(vars_cost, l2norm_scaling),tf.compat.v1.trainable_variables()),global_norm_gradient_clipping_ratio)
+    GNN['train_step'] = optimizer.apply_gradients(zip(grads, tf.compat.v1.trainable_variables()))
     
     # Return GNN dictionary
     return GNN
 #end
+

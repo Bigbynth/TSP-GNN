@@ -159,7 +159,7 @@ if __name__ == '__main__':
     # Set RNG seed for Python, Numpy and Tensorflow
     random.seed(vars(args)['seed'])
     np.random.seed(vars(args)['seed'])
-    tf.set_random_seed(vars(args)['seed'])
+    tf.random.set_seed(vars(args)['seed'])
 
     # Setup parameters
     d                       = vars(args)['d']
@@ -203,11 +203,11 @@ if __name__ == '__main__':
 
     # Disallow GPU use
     #config = tf.ConfigProto( device_count = {'GPU':0})
-    with tf.Session() as sess:
+    with tf.compat.v1.Session() as sess:
 
         # Initialize global variables
         print('Initializing global variables ... ', flush=True)
-        sess.run( tf.global_variables_initializer() )
+        sess.run( tf.compat.v1.global_variables_initializer() )
 
         # Restore saved weights
         if load_checkpoints: 

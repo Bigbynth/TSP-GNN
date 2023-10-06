@@ -36,7 +36,7 @@ class Mlp(object):
             if name_internal_layers:
                 internal_name = name + "_MLP_layer_{}".format( i + 1 )
             #end if
-            new_layer = tf.layers.Dense(
+            new_layer = tf.compat.v1.layers.Dense(
               size,
               activation = activation,
               use_bias = use_bias,
